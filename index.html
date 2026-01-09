@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanzz AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+    body{
+      background: linear-gradient(180deg,#0b0f14,#141b24);
+      color:#e6eef8;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    header{
+      width:100%;
+      padding:18px 0;
+      background:rgba(20,25,32,0.8);
+      backdrop-filter:blur(10px);
+      text-align:center;
+      position:sticky;
+      top:0;
+      z-index:99;
+      box-shadow:0 2px 12px rgba(0,0,0,0.6);
+    }
+    header h1{
+      background:linear-gradient(90deg,#4facfe,#00f2fe);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      font-size:1.8rem;
+      font-weight:700;
+      letter-spacing:1px;
+    }
+    main.chat-container{
+      width:100%;
+      max-width:900px;
+      margin:20px;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    #chat-box{
+      background:rgba(255,255,255,0.04);
+      border-radius:14px;
+      padding:18px;
+      min-height:420px;
+      max-height:60vh;
+      overflow-y:auto;
+      box-shadow:0 6px 24px rgba(0,0,0,0.5);
+    }
+    .message{
+      margin:10px 0;
+      padding:12px 16px;
+      border-radius:12px;
+      max-width:80%;
+      line-height:1.5;
+      animation:fadeIn .2s ease-in-out;
+      word-wrap: break-word;
+    }
+    .message.user{
+      align-self:flex-end;
+      background:linear-gradient(90deg,#4facfe,#00f2fe);
+      color:#000;
+      border-bottom-right-radius:4px;
+    }
+    .message.bot{
+      align-self:flex-start;
+      background:#1e242c;
+      border-bottom-left-radius:4px;
+    }
+    .message img, .message audio{
+      width:160px;
+      border-radius:10px;
+      margin-top:6px;
+      cursor:pointer;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .input-bar{
+      display:flex;
+      align-items:flex-end;
+      gap:10px;
+      background:#161a1f;
+      padding:10px;
+      border-radius:14px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.5);
+    }
+    #user-input{
+      flex:1;
+      min-height:48px;
+      max-height:120px;
+      resize:none;
+      padding:10px;
+      border:none;
+      border-radius:10px;
+      background:#202428;
+      color:#fff;
+      outline:none;
+    }
+    #send-btn{
+      width:50px;
+      height:50px;
+      background:linear-gradient(135deg,#4facfe,#00f2fe);
+      color:#000;
+      font-weight:700;
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
+      transition:.3s;
+      box-shadow:0 0 12px #00f2fe66;
+    }
+    #send-btn:hover{transform:scale(1.05);}
+    .menu-wrapper{position:relative;}
+    .menu-btn{
+      width:50px;height:50px;
+      background:linear-gradient(135deg,#1e252e,#2b323c);
+      color:#00f2fe;
+      border:none;
+      border-radius:12px;
+      font-size:1.3rem;
+      cursor:pointer;
+      box-shadow:0 0 10px rgba(0,242,254,0.3);
+      transition:.3s;
+    }
+    .menu-btn:hover{transform:scale(1.05);}
+    .menu-list{
+      position:absolute;
+      bottom:60px;
+      left:0;
+      display:none;
+      flex-direction:column;
+      gap:10px;
+      background:#11161b;
+      padding:12px;
+      border-radius:12px;
+      box-shadow:0 6px 20px rgba(0,0,0,0.6);
+      animation:fadeIn .2s ease;
+    }
+    .menu-list button{
+      background:linear-gradient(135deg,#1c222a,#2a313a);
+      color:#00f2fe;
+      padding:10px 12px;
+      border:none;
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+      font-weight:500;
+      transition:.2s;
+      box-shadow:0 0 8px rgba(0,242,254,0.25);
+    }
+    .menu-list button:hover{background:#2d3640;}
+    .menu-wrapper.active .menu-list{display:flex;}
+    #preview{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+    .preview-item{position:relative;display:inline-block;}
+    .preview-item img{
+      width:80px;height:80px;
+      object-fit:cover;
+      border-radius:10px;
+      border:2px solid #4facfe;
+    }
+    .preview-item span{
+      position:absolute;
+      top:-6px;
+      right:-6px;
+      background:#ff4c4c;
+      color:#fff;
+      font-weight:bold;
+      border-radius:50%;
+      width:20px;height:20px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      cursor:pointer;
+      box-shadow:0 0 6px rgba(0,0,0,0.5);
+    }
+    #login-modal{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      position:fixed;
+      top:0;left:0;
+      width:100%;
+      height:100%;
+      background:rgba(0,0,0,0.9);
+      z-index:100;
+    }
+    .login-box{
+      background:#111417;
+      padding:26px 24px;
+      border-radius:14px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      box-shadow:0 6px 24px rgba(0,0,0,0.5);
+    }
+    .login-box h2{
+      background:linear-gradient(90deg,#4facfe,#00f2fe);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    .login-box input{
+      width:200px;
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      background:#202428;
+      color:#fff;
+      text-align:center;
+    }
+    .login-box button{
+      padding:8px 16px;
+      background:#4facfe;
+      color:#000;
+      font-weight:600;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+    .login-msg{color:#ff6666;margin-top:6px;}
+    footer{
+      text-align:center;
+      font-size:13px;
+      color:#ffffff;
+      padding:8px 0;
+      background: rgba(20,25,32,0.6);
+      width:100%;
+    }
+    footer a{
+      color:#4facfe;
+      text-decoration:none;
+    }
+    footer a:hover{ text-decoration:underline; }
+  </style>
+</head>
+<body>
+
+<header><h1>Sanzz AI</h1></header>
+
+<main class="chat-container">
+  <div id="chat-box"></div>
+  <div class="input-bar">
+    <div class="menu-wrapper">
+      <button class="menu-btn">☰</button>
+      <div class="menu-list">
+        <button id="camera-btn">📷 Kamera</button>
+        <input type="file" id="album-input" accept="image/*" multiple hidden>
+        <button id="album-btn">🖼️ Album</button>
+        <button id="voice-btn">🎤 Rekam Suara</button>
+      </div>
+    </div>
+    <textarea id="user-input" placeholder="Ketik pesan..."></textarea>
+    <button id="send-btn">➤</button>
+  </div>
+  <div id="preview"></div>
+</main>
+
+<div id="login-modal">
+  <div class="login-box">
+    <h2>Masukkan Kode</h2>
+    <input type="password" id="login-pass" placeholder="Kode Akses">
+    <button id="login-btn">Masuk</button>
+    <p id="login-msg" class="login-msg"></p>
+  </div>
+</div>
+
+<footer>
+  Ada Kendala: <a href="mailto:sanzzhubkendala@gmail.com">sanzzhubkendala@gmail.com</a>
+</footer>
+
+<script>
+const GEMINI_KEY = "AIzaSyAGU4Kxd7CtZhlVHDMsocBdN5JPACywQEE";
+
+// ✅ Bisa lebih dari satu password
+const PASSWORDS = ["meisya", "ajwa", "2020","aya"];
+
+const loginModal = document.getElementById("login-modal");
+const loginBtn = document.getElementById("login-btn");
+const loginInput = document.getElementById("login-pass");
+const loginMsg = document.getElementById("login-msg");
+const chatContainer = document.querySelector("main.chat-container");
+const headerEl = document.querySelector("header");
+const chatBox = document.getElementById("chat-box");
+const input = document.getElementById("user-input");
+const sendBtn = document.getElementById("send-btn");
+const cameraBtn = document.getElementById("camera-btn");
+const albumBtn = document.getElementById("album-btn");
+const albumInput = document.getElementById("album-input");
+const voiceBtn = document.getElementById("voice-btn");
+const preview = document.getElementById("preview");
+const menuBtn = document.querySelector(".menu-btn");
+const menuWrapper = document.querySelector(".menu-wrapper");
+
+let selectedImages = [];
+let chatHistory = [];
+
+chatContainer.style.display = "none";
+headerEl.style.display = "none";
+
+loginBtn.onclick = () => {
+  const inputPass = loginInput.value.trim();
+  if (PASSWORDS.includes(inputPass)) {
+    loginModal.style.display = "none";
+    chatContainer.style.display = "flex";
+    headerEl.style.display = "block";
+  } else {
+    loginMsg.textContent = "Kode salah!";
+  }
+};
+loginInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") loginBtn.click();
+});
+
+menuBtn.onclick = () => menuWrapper.classList.toggle("active");
+sendBtn.onclick = kirimPesan;
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    kirimPesan();
+  }
+});
+
+function tambahPesan(sender, text = "", media = []) {
+  const msg = document.createElement("div");
+  msg.className = `message ${sender}`;
+  if (text) msg.innerHTML = text;
+  media.forEach(url => {
+    if (url.endsWith(".webm")) {
+      const audio = document.createElement("audio");
+      audio.src = url;
+      audio.controls = true;
+      msg.appendChild(audio);
+    } else {
+      const img = document.createElement("img");
+      img.src = url;
+      msg.appendChild(img);
+    }
+  });
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
+  return msg;
+}
+
+async function kirimPesan() {
+  const text = input.value.trim();
+  if (text === "" && selectedImages.length === 0) return;
+
+  tambahPesan("user", text, selectedImages);
+
+  let parts = [];
+  if (text) parts.push({ text });
+  selectedImages.forEach(url => parts.push({ image: url }));
+  chatHistory.push({ role: "user", parts });
+
+  input.value = "";
+  selectedImages = [];
+  preview.innerHTML = "";
+
+  const loading = tambahPesan("bot", "Sanzz AI sedang mengetik...");
+  const response = await kirimKeGemini();
+  chatBox.removeChild(loading);
+  tambahPesan("bot", response);
+  chatHistory.push({ role: "model", parts: [{ text: response }] });
+}
+
+async function kirimKeGemini() {
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: chatHistory })
+      }
+    );
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Maaf, tidak ada respons.";
+  } catch (e) {
+    return "Terjadi kesalahan koneksi.";
+  }
+}
+
+// Kamera & Album
+cameraBtn.onclick = () => {
+  const inputCamera = document.createElement("input");
+  inputCamera.type = "file";
+  inputCamera.accept = "image/*";
+  inputCamera.capture = "environment";
+  inputCamera.multiple = true;
+  inputCamera.onchange = e => tambahPreview(e.target.files);
+  inputCamera.click();
+};
+albumBtn.onclick = () => albumInput.click();
+albumInput.onchange = e => tambahPreview(e.target.files);
+
+function tambahPreview(files) {
+  for (const file of files) selectedImages.push(URL.createObjectURL(file));
+  renderPreview();
+}
+function renderPreview() {
+  preview.innerHTML = "";
+  selectedImages.forEach((url, i) => {
+    const div = document.createElement("div");
+    div.className = "preview-item";
+    const img = document.createElement("img");
+    img.src = url;
+    const x = document.createElement("span");
+    x.textContent = "×";
+    x.onclick = () => {
+      selectedImages.splice(i, 1);
+      renderPreview();
+    };
+    div.appendChild(img);
+    div.appendChild(x);
+    preview.appendChild(div);
+  });
+}
+
+// Rekam suara
+let recorder, audioChunks = [];
+voiceBtn.onclick = async () => {
+  if (recorder && recorder.state === "recording") {
+    recorder.stop();
+    voiceBtn.textContent = "🎤 Rekam Suara";
+  } else {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = e => audioChunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const url = URL.createObjectURL(blob);
+      tambahPesan("user", "🎧 Suara direkam:", [url]);
+      audioChunks = [];
+    };
+    recorder.start();
+    voiceBtn.textContent = "⏹️ Stop";
+  }
+};
+</script>
+</body>
+</html>
